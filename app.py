@@ -111,16 +111,26 @@ st.title("UCI Mushroom Dataset - ML Classification Dashboard")
 st.sidebar.header("Options: Select Model or upload test data")
 st.sidebar.markdown("---")
 upload_file = st.sidebar.file_uploader("Upload Test Data (CSV)", type=["csv"])
+
+
+upload_data = None
+data_x = None
+data_y = None
+data_x_encoded = None
+data_y_predict = None
+
 if upload_file is not None:
     st.sidebar.success("Custom test dataset loaded!")
     upload_data = pd.read_csv(upload_file)
     st.write("Uploaded Test Data")
     st.dataframe(upload_data.head())
     data_x = upload_data.drop("class",axis=1)
-    ohe.transform(data_x)
+    data_y = upload_data["class"].map({"p": 1, "e": 0})
+    data_x_encoded = ohe.transform(data_x)
     
 
 st.sidebar.markdown("---")
+# download sample
 with open("test_data.csv","rb") as file:
     st.sidebar.download_button(
         label="Downlaod Sample Test Data",
@@ -132,6 +142,14 @@ with open("test_data.csv","rb") as file:
 st.sidebar.markdown("---")
 # side bar also contain dropdown for modules
 model_name = st.sidebar.selectbox("Select ML Model:", list(results.keys()))
+
+selected_model = results[model_name]["model"]
+
+if data_x_encoded is not None:
+    data_y_predict = selected_model.predict(data_x_encoded)
+else:
+    data_y_predict = results[model_name]["y_predict"]
+
 st.sidebar.markdown("---")
 
 
@@ -141,8 +159,10 @@ st.markdown("Implemented as part of Machine Learning Assignment 2.")
 
 
 st.header(f"Model Results: {model_name}")
+
 model_results = results[model_name]
 metrics = model_results["metrics"]
+
 col1, col2, col3, col4, col5, col6 = st.columns(6)
 col1.metric("Accuracy", f"{metrics['accuracy']:.4f}")
 col2.metric("AUC", f"{metrics['AUC']:.4f}")
